@@ -1,0 +1,376 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * swiatautyzmu.pl — design system
+ * Kierunek: Modern soft sage. Ciepła, uspokajająca paleta, hojne odstępy,
+ * duża typografia, brak nagłych ruchów. Zaprojektowana pod WCAG AAA.
+ *
+ * Tryby dostępności aktywowane przez klasy na <html>:
+ *  .low-arousal    — pastelowe kolory zbite do jednego kremowego tła
+ *  .font-dyslexic  — czcionka OpenDyslexic dla wszystkich tekstów
+ *  .font-scale-*   — skalowanie rozmiaru tekstu bazowego (90/100/115/130)
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-crisis: var(--crisis);
+  --color-crisis-foreground: var(--crisis-foreground);
+  --color-sand: var(--sand);
+  --color-sand-deep: var(--sand-deep);
+  --color-sage: var(--sage);
+  --color-sage-soft: var(--sage-soft);
+  --color-sage-deep: var(--sage-deep);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --font-sans: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Outfit", system-ui, sans-serif;
+  --font-dyslexic: "OpenDyslexic", "Comic Sans MS", sans-serif;
+}
+
+:root {
+  --radius: 1rem;
+
+  /* Sand / cream base */
+  --sand: oklch(0.982 0.008 85);
+  --sand-deep: oklch(0.955 0.014 80);
+
+  /* Sage green — brand primary */
+  --sage-soft: oklch(0.955 0.014 145);
+  --sage: oklch(0.72 0.055 145);
+  --sage-deep: oklch(0.44 0.055 145);
+
+  --background: oklch(0.985 0.006 85);
+  --foreground: oklch(0.2 0.018 250);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.018 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.018 250);
+
+  --primary: oklch(0.44 0.055 145);
+  --primary-foreground: oklch(0.985 0.006 85);
+  --primary-soft: oklch(0.955 0.014 145);
+
+  --secondary: oklch(0.955 0.014 80);
+  --secondary-foreground: oklch(0.3 0.03 250);
+
+  --muted: oklch(0.955 0.01 85);
+  --muted-foreground: oklch(0.48 0.015 250);
+
+  --accent: oklch(0.87 0.055 75);
+  --accent-foreground: oklch(0.3 0.04 60);
+
+  --destructive: oklch(0.55 0.19 27);
+  --destructive-foreground: oklch(0.985 0.006 85);
+
+  --crisis: oklch(0.55 0.16 30);
+  --crisis-foreground: oklch(0.985 0.006 85);
+
+  --border: oklch(0.9 0.01 90);
+  --input: oklch(0.9 0.01 90);
+  --ring: oklch(0.44 0.055 145);
+
+  --chart-1: oklch(0.44 0.055 145);
+  --chart-2: oklch(0.72 0.055 145);
+  --chart-3: oklch(0.87 0.055 75);
+  --chart-4: oklch(0.55 0.16 30);
+  --chart-5: oklch(0.6 0.05 240);
+
+  --sidebar: oklch(0.982 0.008 85);
+  --sidebar-foreground: oklch(0.2 0.018 250);
+  --sidebar-primary: oklch(0.44 0.055 145);
+  --sidebar-primary-foreground: oklch(0.985 0.006 85);
+  --sidebar-accent: oklch(0.955 0.014 145);
+  --sidebar-accent-foreground: oklch(0.3 0.03 250);
+  --sidebar-border: oklch(0.9 0.01 90);
+  --sidebar-ring: oklch(0.44 0.055 145);
+}
+
+/* Low-arousal mode: zredukowana paleta, jedno spokojne tło, brak akcentów kolorystycznych. */
+html.low-arousal {
+  --background: oklch(0.975 0.01 85);
+  --card: oklch(0.975 0.01 85);
+  --popover: oklch(0.975 0.01 85);
+  --primary: oklch(0.3 0.01 250);
+  --primary-foreground: oklch(0.975 0.01 85);
+  --primary-soft: oklch(0.94 0.006 85);
+  --accent: oklch(0.94 0.006 85);
+  --accent-foreground: oklch(0.2 0.01 250);
+  --sage: oklch(0.55 0.015 250);
+  --sage-soft: oklch(0.94 0.006 85);
+  --sage-deep: oklch(0.3 0.01 250);
+  --crisis: oklch(0.35 0.05 30);
+  --border: oklch(0.85 0.006 85);
+}
+
+html.low-arousal img,
+html.low-arousal video {
+  filter: saturate(0.5) contrast(0.95);
+}
+
+/* Rozmiar bazowy czcionki (accessibility scale) */
+html {
+  font-size: 100%;
+}
+html.font-scale-90 {
+  font-size: 90%;
+}
+html.font-scale-115 {
+  font-size: 115%;
+}
+html.font-scale-130 {
+  font-size: 130%;
+}
+
+html.font-dyslexic body,
+html.font-dyslexic input,
+html.font-dyslexic textarea,
+html.font-dyslexic button {
+  font-family: var(--font-dyslexic) !important;
+  letter-spacing: 0.02em;
+}
+
+/* Reduced motion — zawsze respektowane */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.dark {
+  --background: oklch(0.2 0.01 250);
+  --foreground: oklch(0.96 0.006 85);
+  --card: oklch(0.24 0.012 250);
+  --card-foreground: oklch(0.96 0.006 85);
+  --popover: oklch(0.24 0.012 250);
+  --popover-foreground: oklch(0.96 0.006 85);
+  --primary: oklch(0.75 0.055 145);
+  --primary-foreground: oklch(0.2 0.01 250);
+  --primary-soft: oklch(0.3 0.02 145);
+  --secondary: oklch(0.28 0.012 250);
+  --secondary-foreground: oklch(0.96 0.006 85);
+  --muted: oklch(0.28 0.012 250);
+  --muted-foreground: oklch(0.75 0.01 85);
+  --accent: oklch(0.55 0.1 75);
+  --accent-foreground: oklch(0.96 0.006 85);
+  --destructive: oklch(0.6 0.19 27);
+  --destructive-foreground: oklch(0.96 0.006 85);
+  --border: oklch(0.32 0.01 250);
+  --input: oklch(0.32 0.01 250);
+  --ring: oklch(0.75 0.055 145);
+  --sand: oklch(0.24 0.012 250);
+  --sand-deep: oklch(0.28 0.012 250);
+  --sage-soft: oklch(0.3 0.02 145);
+  --sage: oklch(0.75 0.055 145);
+  --sage-deep: oklch(0.85 0.03 145);
+  --crisis: oklch(0.65 0.18 30);
+  --crisis-foreground: oklch(0.2 0.01 250);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Focus ring — widoczny na każdym interaktywnym elemencie (WCAG AAA) */
+  :focus-visible {
+    outline: 3px solid var(--color-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+/* ============================================================
+ * "Ciepły spokój" — warstwa ciepła zainspirowana plakatem.
+ * Pastelowe akcenty ikon + pociągnięcia pędzla pod eyebrow +
+ * ręcznie rysowane serduszko. Wszystko neutralizowane w trybie
+ * wyciszenia sensorycznego (low-arousal), by nie łamać WCAG AAA.
+ * ============================================================ */
+:root {
+  /* granat nagłówków z plakatu (nadpisuje chłodny foreground na cieplejszy) */
+  --ink-navy: oklch(0.33 0.045 250);
+
+  /* pastelowe pary akcentów: tło + tekst (kontrast AA na ciemnym tekście) */
+  --chip-rose: oklch(0.9 0.045 15);
+  --chip-rose-ink: oklch(0.47 0.11 18);
+  --chip-amber: oklch(0.91 0.055 78);
+  --chip-amber-ink: oklch(0.5 0.09 66);
+  --chip-mint: oklch(0.91 0.045 150);
+  --chip-mint-ink: oklch(0.45 0.08 152);
+  --chip-sky: oklch(0.9 0.045 240);
+  --chip-sky-ink: oklch(0.46 0.09 245);
+  --chip-lilac: oklch(0.9 0.045 300);
+  --chip-lilac-ink: oklch(0.48 0.09 300);
+  --chip-teal: oklch(0.91 0.045 195);
+  --chip-teal-ink: oklch(0.45 0.07 195);
+}
+
+/* delikatnie cieplejsze tło bazowe (bliżej papieru z plakatu) */
+:root {
+  --background: oklch(0.986 0.01 80);
+}
+
+/* Eyebrow z „pociągnięciem pędzla” — sygnaturowy element z plakatu */
+.eyebrow {
+  position: relative;
+  display: inline-block;
+  z-index: 0;
+  padding: 0.15em 0.55em;
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--sage-deep);
+}
+.eyebrow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--chip-amber);
+  opacity: 0.6;
+  border-radius: 12px 10px 14px 9px;
+  transform: rotate(-1.2deg);
+}
+.eyebrow[data-brush="sky"]::before {
+  background: var(--chip-sky);
+}
+.eyebrow[data-brush="rose"]::before {
+  background: var(--chip-rose);
+}
+.eyebrow[data-brush="mint"]::before {
+  background: var(--chip-mint);
+}
+
+/* kolorowe kółka/kafelki pod ikony (jak lewa kolumna plakatu) */
+.chip-rose {
+  background: var(--chip-rose);
+  color: var(--chip-rose-ink);
+}
+.chip-amber {
+  background: var(--chip-amber);
+  color: var(--chip-amber-ink);
+}
+.chip-mint {
+  background: var(--chip-mint);
+  color: var(--chip-mint-ink);
+}
+.chip-sky {
+  background: var(--chip-sky);
+  color: var(--chip-sky-ink);
+}
+.chip-lilac {
+  background: var(--chip-lilac);
+  color: var(--chip-lilac-ink);
+}
+.chip-teal {
+  background: var(--chip-teal);
+  color: var(--chip-teal-ink);
+}
+
+/* podkreślenie „pisakiem” pod słowem kluczowym w nagłówku */
+.ink-underline {
+  position: relative;
+  color: var(--sage-deep);
+  white-space: nowrap;
+}
+.ink-underline::after {
+  content: "";
+  position: absolute;
+  left: -2%;
+  right: -2%;
+  bottom: 0.05em;
+  height: 0.32em;
+  z-index: -1;
+  background: var(--chip-amber);
+  opacity: 0.5;
+  border-radius: 8px;
+  transform: rotate(-0.8deg);
+}
+
+/* Tryb wyciszenia: wszystkie akcenty do neutralnej szarości papieru */
+html.low-arousal .eyebrow::before,
+html.low-arousal .ink-underline::after,
+html.low-arousal [class^="chip-"],
+html.low-arousal [class*=" chip-"] {
+  background: var(--muted) !important;
+  color: var(--foreground) !important;
+  opacity: 1;
+}

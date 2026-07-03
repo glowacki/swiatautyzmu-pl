@@ -1,0 +1,8 @@
+# Cloudflare Pages configuration for swiatautyzmu.pl
+# TanStack Start + Nitro with Cloudflare Pages Functions output.
+name = "swiatautyzmu"
+compatibility_date = "2026-07-02"
+compatibility_flags = ["nodejs_compat"]
+
+# Nitro preset cloudflare_pages builds into dist/ and includes _worker.js + _routes.json.
+pages_build_output_dir = "dist"

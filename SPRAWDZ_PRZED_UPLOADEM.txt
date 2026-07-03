@@ -1,0 +1,11 @@
+PRZED WRZUCENIEM NA GITHUB SPRAWDŹ:
+
+Po rozpakowaniu tego ZIP-a w tym samym katalogu musisz widzieć:
+package.json
+vite.config.ts
+wrangler.toml
+src
+public
+
+Nie wrzucaj do GitHub samego folderu nadrzędnego, jeśli potem ustawiasz Root directory: /.
+Najprościej: utwórz puste repozytorium, rozpakuj ten ZIP i wrzuć CAŁĄ jego zawartość bezpośrednio do repo.
