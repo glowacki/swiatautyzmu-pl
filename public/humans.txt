@@ -1,0 +1,4 @@
+swiatautyzmu.pl
+Portal edukacyjny o autyzmie i neuroróżnorodności.
+Język: polski.
+Standard projektowy: WCAG, low-arousal UX, ETR, SEO/GEO/AEO.

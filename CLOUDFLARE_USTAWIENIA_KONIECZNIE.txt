@@ -1,0 +1,43 @@
+SWIATAUTYZMU.PL — KONIECZNE USTAWIENIA CLOUDFLARE PAGES
+
+1) Ten ZIP jest przygotowany tak, żeby po rozpakowaniu PLIKI BYŁY W KATALOGU GŁÓWNYM REPOZYTORIUM.
+   W głównym katalogu GitHub muszą być widoczne co najmniej:
+   - package.json
+   - package-lock.json
+   - vite.config.ts
+   - wrangler.toml
+   - src/
+   - public/
+   - supabase/
+
+2) Cloudflare Pages → Settings → Builds & deployments:
+   Framework preset: None
+   Build command: npm run build
+   Build output directory: dist
+   Root directory: /
+   Production branch: main
+
+3) Environment variables:
+   NODE_VERSION = 22
+
+   Jeżeli używasz Supabase, dodaj też:
+   VITE_SUPABASE_URL
+   VITE_SUPABASE_PROJECT_ID
+   VITE_SUPABASE_PUBLISHABLE_KEY
+   SUPABASE_URL
+   SUPABASE_PROJECT_ID
+   SUPABASE_PUBLISHABLE_KEY
+
+4) Po zmianie ustawień zrób:
+   Deployments → Retry deployment → Clear build cache and retry deployment
+
+5) W poprawnym logu builda musi być:
+   npm run build
+   [nitro] Building [Nitro] preset: cloudflare-pages
+   Generated public dist
+   Generated dist/_routes.json
+   Generated dist/_worker.js/wrangler.json
+
+6) Jeżeli zobaczysz w logu:
+   No build command specified. Skipping build step.
+   to znaczy, że Cloudflare nadal NIE buduje aplikacji i będzie 404.

@@ -1,0 +1,18 @@
+# swiatautyzmu.pl
+
+Portal edukacyjny o autyzmie, spektrum autyzmu i neuroróżnorodności w Polsce.
+
+## Najważniejsze sekcje
+
+- /baza-wiedzy — definicje, diagnoza ASD, AuDHD, współwystępowanie, dziewczęta i kobiety w spektrum, autyzm u dorosłych, mity i fakty.
+- /zycie-codzienne — sensoryka, komunikacja, AAC, meltdown, shutdown, stimming, maskowanie i wypalenie autystyczne.
+- /etapy-zycia — wczesne dzieciństwo, szkoła, dojrzewanie, dorosłość, studia, praca, relacje i rodzicielstwo.
+- /prawo-finanse — orzecznictwo, WOPFU, IPET, świadczenie wspierające, renta socjalna, PFRON, prawa w edukacji i pracy.
+- /terapie — metody wspierające, kryteria dobrej terapii i ostrzeżenia przed praktykami obiecującymi „wyleczenie” autyzmu.
+- /katalog — katalog diagnostów, terapeutów, ośrodków, placówek edukacyjnych i miejsc autism-friendly w Polsce.
+- /slownik — krótki słownik pojęć: stimming, meltdown, shutdown, maskowanie, wypalenie autystyczne, propriocepcja, AAC.
+- /pomoc-kryzysowa — numery wsparcia i strategie obniżania przeciążenia sensorycznego.
+
+## Zasady redakcyjne
+
+Treści mają charakter edukacyjny. Nie zastępują diagnozy, psychoterapii, konsultacji lekarskiej ani porady prawnej. Portal używa języka afirmującego neuroróżnorodność i zasady „nic o nas bez nas”.
