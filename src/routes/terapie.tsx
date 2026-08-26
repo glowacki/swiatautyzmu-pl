@@ -18,6 +18,7 @@ export const Route = createFileRoute("/terapie")({
       eyebrow="Co działa, a co szkodzi"
       title="Terapie i metody pracy"
       lead="Podejścia wspierające rozwój — bez „naprawiania”. Oraz jasna lista praktyk kontrowersyjnych i niebezpiecznych."
+      categoryKey="terapie"
       topics={[
         {
           icon: HeartPulse,
