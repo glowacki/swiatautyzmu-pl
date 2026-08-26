@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Clock, Search } from "lucide-react";
+import { BookOpen, Clock, Search } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -61,6 +61,8 @@ function KnowledgePage() {
 
   const legacyArticles = useQuery({
     queryKey: ["articles", "supabase"],
+    retry: false,
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("articles")
@@ -84,6 +86,8 @@ function KnowledgePage() {
 
   const cmsArticles = useQuery({
     queryKey: ["articles", "cloudflare-cms"],
+    retry: 1,
+    staleTime: 60 * 1000,
     queryFn: async () => {
       const response = await fetch("/content-index.json", {
         headers: { Accept: "application/json" },
@@ -135,7 +139,8 @@ function KnowledgePage() {
     return a.title.toLowerCase().includes(needle) || a.excerpt?.toLowerCase().includes(needle);
   });
 
-  const isLoading = legacyArticles.isLoading || cmsArticles.isLoading;
+  // Cloudflare CMS jest źródłem głównym. Stare Supabase nie może blokować widoku.
+  const isLoading = cmsArticles.isLoading && !legacyArticles.data;
 
   return (
     <div className="mx-auto max-w-7xl px-4 md:px-8 py-16">
@@ -183,9 +188,15 @@ function KnowledgePage() {
       </div>
 
       {isLoading ? (
-        <div className="mt-12 grid gap-8 md:grid-cols-3">
+        <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3" aria-live="polite">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-64 rounded-3xl bg-muted animate-pulse" />
+            <div key={i} className="rounded-3xl bg-card p-6 ring-1 ring-border">
+              <div className="h-32 rounded-2xl bg-muted animate-pulse" />
+              <div className="mt-5 h-4 w-24 rounded bg-muted animate-pulse" />
+              <div className="mt-4 h-6 w-5/6 rounded bg-muted animate-pulse" />
+              <div className="mt-3 h-4 w-full rounded bg-muted animate-pulse" />
+              <div className="mt-2 h-4 w-3/4 rounded bg-muted animate-pulse" />
+            </div>
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -236,7 +247,12 @@ function ArticleCardContent({ article }: { article: ArticleCard }) {
           />
         </div>
       ) : (
-        <div className="mb-5 aspect-[16/10] rounded-2xl bg-sage-soft" />
+        <div className="mb-5 flex min-h-36 items-center justify-center rounded-2xl bg-sage-soft px-6 text-center text-sage-deep">
+          <div>
+            <BookOpen className="mx-auto size-7" aria-hidden />
+            <p className="mt-3 text-xs font-semibold uppercase tracking-widest">Artykuł redakcyjny</p>
+          </div>
+        </div>
       )}
       <div className="flex items-center gap-3 text-xs">
         <span className="rounded-md bg-sage-soft px-2 py-1 font-semibold uppercase tracking-wider text-sage-deep">
@@ -252,7 +268,9 @@ function ArticleCardContent({ article }: { article: ArticleCard }) {
       <h2 className="mt-3 font-display text-xl font-semibold leading-snug group-hover:text-sage-deep">
         {article.title}
       </h2>
-      <p className="mt-2 text-sm text-muted-foreground line-clamp-3 flex-1">{article.excerpt}</p>
+      {article.excerpt ? (
+        <p className="mt-2 text-sm text-muted-foreground line-clamp-3 flex-1">{article.excerpt}</p>
+      ) : null}
     </>
   );
 }
