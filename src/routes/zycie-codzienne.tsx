@@ -1,5 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Ear, Wind, HeartHandshake, BatteryLow } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Ear, Wind, HeartHandshake, BatteryLow, Clock } from "lucide-react";
+
+import { supabase } from "@/integrations/supabase/client";
 
 const TOPICS = [
   {
@@ -24,6 +27,27 @@ const TOPICS = [
   },
 ];
 
+type PublicArticle = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  category: string;
+  published_at: string | null;
+  reading_minutes: number | null;
+  href?: string;
+};
+
+type CmsIndexItem = {
+  url?: string;
+  title?: string;
+  summary?: string;
+  date_modified?: string;
+  published_at?: string;
+  category?: string;
+  source?: string;
+};
+
 export const Route = createFileRoute("/zycie-codzienne")({
   head: () => ({
     meta: [
@@ -41,6 +65,7 @@ export const Route = createFileRoute("/zycie-codzienne")({
       title="Życie codzienne — praca z układem nerwowym, nie przeciwko niemu"
       lead="Wszystko, co pomaga funkcjonować bez maskowania: sensoryka, komunikacja, regulacja emocji, energia."
       topics={TOPICS}
+      categoryKey="zycie-codzienne"
     />
   ),
 });
@@ -52,12 +77,83 @@ function SectionLanding({
   title,
   lead,
   topics,
+  categoryKey,
 }: {
   eyebrow: string;
   title: string;
   lead: string;
   topics: Topic[];
+  categoryKey: string;
 }) {
+  const articles = useQuery({
+    queryKey: ["section-articles", categoryKey],
+    queryFn: async () => {
+      const [legacy, cms] = await Promise.all([
+        supabase
+          .from("articles")
+          .select("id, slug, title, excerpt, category, reading_minutes, published_at")
+          .eq("status", "published")
+          .eq("category", categoryKey as never)
+          .order("published_at", { ascending: false })
+          .limit(12),
+        fetch("/content-index.json", {
+          headers: { Accept: "application/json" },
+          cache: "no-store",
+        }).catch(() => null),
+      ]);
+
+      const items: PublicArticle[] = [];
+
+      if (!legacy.error) {
+        for (const article of legacy.data ?? []) {
+          items.push({
+            id: String(article.id),
+            slug: article.slug,
+            title: article.title,
+            excerpt: article.excerpt,
+            category: article.category,
+            reading_minutes: article.reading_minutes,
+            published_at: article.published_at,
+          });
+        }
+      }
+
+      if (cms?.ok) {
+        const payload = (await cms.json()) as { urls?: CmsIndexItem[] };
+        for (const item of payload.urls ?? []) {
+          if (item?.source !== "editorial-cms" || !item.url || !item.title) continue;
+          if ((item.category ?? "baza-wiedzy") !== categoryKey) continue;
+          const slug = item.url.split("/").filter(Boolean).pop() ?? item.url;
+          items.push({
+            id: `cms:${item.url}`,
+            slug,
+            title: item.title,
+            excerpt: item.summary ?? null,
+            category: item.category ?? categoryKey,
+            reading_minutes: null,
+            published_at: item.published_at ?? item.date_modified ?? null,
+            href: item.url,
+          });
+        }
+      }
+
+      const seen = new Set<string>();
+      return items
+        .filter((article) => {
+          const key = `${article.slug}:${article.title}`.toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .sort((a, b) => {
+          const aDate = a.published_at ? new Date(a.published_at).getTime() : 0;
+          const bDate = b.published_at ? new Date(b.published_at).getTime() : 0;
+          return bDate - aDate;
+        })
+        .slice(0, 6);
+    },
+  });
+
   return (
     <div className="mx-auto max-w-6xl px-4 md:px-8 py-16">
       <header className="max-w-3xl">
@@ -67,6 +163,7 @@ function SectionLanding({
         </h1>
         <p className="mt-4 text-lg text-muted-foreground">{lead}</p>
       </header>
+
       <div className="mt-12 grid gap-6 md:grid-cols-2">
         {topics.map((t) => {
           const Icon = t.icon;
@@ -81,14 +178,76 @@ function SectionLanding({
           );
         })}
       </div>
-      <div className="mt-12">
-        <Link
-          to="/baza-wiedzy"
-          className="inline-flex items-center gap-2 rounded-full bg-sage-deep px-6 py-3 text-sm font-semibold text-primary-foreground"
-        >
-          Przejdź do artykułów →
-        </Link>
-      </div>
+
+      <section className="mt-16" aria-labelledby={`${categoryKey}-articles`}>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-sage">Publikacje</p>
+            <h2 id={`${categoryKey}-articles`} className="mt-2 font-display text-3xl font-semibold tracking-tight">
+              Najnowsze artykuły w tym dziale
+            </h2>
+          </div>
+          <Link
+            to="/baza-wiedzy"
+            className="text-sm font-semibold text-sage-deep hover:underline underline-offset-4"
+          >
+            Cała baza wiedzy →
+          </Link>
+        </div>
+
+        {articles.isLoading ? (
+          <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-56 rounded-3xl bg-muted animate-pulse" />
+            ))}
+          </div>
+        ) : (articles.data?.length ?? 0) > 0 ? (
+          <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {articles.data?.map((article) => {
+              const card = (
+                <>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-sage-deep">
+                    {eyebrow}
+                  </span>
+                  <h3 className="mt-3 font-display text-xl font-semibold leading-snug group-hover:text-sage-deep">
+                    {article.title}
+                  </h3>
+                  <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{article.excerpt}</p>
+                  {article.reading_minutes ? (
+                    <span className="mt-5 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="size-3.5" aria-hidden />
+                      {article.reading_minutes} min
+                    </span>
+                  ) : null}
+                </>
+              );
+
+              return article.href ? (
+                <a
+                  key={article.id}
+                  href={article.href}
+                  className="group flex min-h-56 flex-col rounded-3xl bg-card p-6 ring-1 ring-border transition-all hover:ring-sage"
+                >
+                  {card}
+                </a>
+              ) : (
+                <Link
+                  key={article.id}
+                  to="/artykul/$slug"
+                  params={{ slug: article.slug }}
+                  className="group flex min-h-56 flex-col rounded-3xl bg-card p-6 ring-1 ring-border transition-all hover:ring-sage"
+                >
+                  {card}
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="mt-8 rounded-3xl border border-dashed border-border p-8 text-muted-foreground">
+            W tym dziale nie ma jeszcze opublikowanych artykułów. Nowe publikacje pojawią się tutaj automatycznie.
+          </div>
+        )}
+      </section>
     </div>
   );
 }
