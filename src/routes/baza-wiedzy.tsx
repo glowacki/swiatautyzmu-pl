@@ -5,6 +5,7 @@ import { BookOpen, Clock, Search } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
+import { CmsArticleView } from "./baza-wiedzy.$slug";
 
 const CATEGORIES = [
   { key: "all", label: "Wszystkie" },
@@ -56,6 +57,18 @@ export const Route = createFileRoute("/baza-wiedzy")({
 });
 
 function KnowledgePage() {
+  if (typeof window !== "undefined") {
+    const match = window.location.pathname.match(/^\/baza-wiedzy\/([a-z0-9-]+)\/?$/);
+    const post = window.__CMS_POST__;
+    if (match && post && post.slug === match[1]) {
+      return <CmsArticleView post={post} />;
+    }
+  }
+
+  return <KnowledgeIndexPage />;
+}
+
+function KnowledgeIndexPage() {
   const [category, setCategory] = useState<string>("all");
   const [q, setQ] = useState("");
 
