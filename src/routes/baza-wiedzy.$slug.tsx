@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 type Source = { name: string; url: string };
 type FaqItem = { q: string; a: string };
 
-type CmsPost = {
+export type CmsPost = {
   slug: string;
   title: string;
   excerpt?: string | null;
@@ -57,6 +57,10 @@ function CmsArticlePage() {
     );
   }
 
+  return <CmsArticleView post={post} />;
+}
+
+export function CmsArticleView({ post }: { post: CmsPost }) {
   const published = formatDate(post.published_at);
   const reviewed = formatDate(post.reviewed_at);
   const sources = parseArray<Source>(post.sources_json);
