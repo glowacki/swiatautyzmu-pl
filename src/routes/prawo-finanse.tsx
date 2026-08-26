@@ -18,6 +18,7 @@ export const Route = createFileRoute("/prawo-finanse")({
       eyebrow="Biurokracja na wyciszenie"
       title="Prawo i finanse — przewodnik po polskim systemie"
       lead="Bez żargonu urzędniczego. Krok po kroku, ze wzorami pism i kalkulatorem uprawnień."
+      categoryKey="prawo-finanse"
       topics={[
         {
           icon: FileCheck,
