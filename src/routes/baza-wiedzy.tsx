@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Clock, Search } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,29 @@ const CATEGORIES = [
   { key: "historie", label: "Historie" },
 ] as const;
 
+type ArticleCard = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  category: string;
+  reading_minutes: number | null;
+  published_at: string | null;
+  href?: string;
+  cover_image?: string | null;
+};
+
+type CmsIndexItem = {
+  url?: string;
+  title?: string;
+  summary?: string;
+  date_modified?: string;
+  published_at?: string;
+  category?: string;
+  cover_image?: string | null;
+  source?: string;
+};
+
 export const Route = createFileRoute("/baza-wiedzy")({
   head: () => ({
     meta: [
@@ -23,7 +46,7 @@ export const Route = createFileRoute("/baza-wiedzy")({
       {
         name: "description",
         content:
-          "Rzetelne artykuły o autyzmie: diagnoza, komorbidność, kobiety w spektrum, dorośli, mity i fakty. Wiedza oparta na neuroróżnorodności.",
+          "Rzetelne artykuły o autyzmie: diagnoza, współwystępowanie, kobiety w spektrum, dorośli, mity i fakty. Wiedza oparta na neuroróżnorodności.",
       },
       { property: "og:title", content: "Baza wiedzy o autyzmie — swiatautyzmu.pl" },
       { property: "og:description", content: "Encyklopedia neuroróżnorodności po polsku." },
@@ -36,27 +59,83 @@ function KnowledgePage() {
   const [category, setCategory] = useState<string>("all");
   const [q, setQ] = useState("");
 
-  const articles = useQuery({
-    queryKey: ["articles", category],
+  const legacyArticles = useQuery({
+    queryKey: ["articles", "supabase"],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("articles")
         .select("id, slug, title, excerpt, category, reading_minutes, published_at")
         .eq("status", "published")
         .order("published_at", { ascending: false });
-      if (category !== "all") query = query.eq("category", category as never);
-      const { data, error } = await query;
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).map(
+        (a): ArticleCard => ({
+          id: String(a.id),
+          slug: a.slug,
+          title: a.title,
+          excerpt: a.excerpt,
+          category: a.category,
+          reading_minutes: a.reading_minutes,
+          published_at: a.published_at,
+        }),
+      );
     },
   });
 
-  const filtered = (articles.data ?? []).filter((a) =>
-    q.trim() === ""
-      ? true
-      : a.title.toLowerCase().includes(q.toLowerCase()) ||
-        a.excerpt?.toLowerCase().includes(q.toLowerCase()),
-  );
+  const cmsArticles = useQuery({
+    queryKey: ["articles", "cloudflare-cms"],
+    queryFn: async () => {
+      const response = await fetch("/content-index.json", {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      if (!response.ok) return [] as ArticleCard[];
+
+      const payload = (await response.json()) as { urls?: CmsIndexItem[] };
+      return (payload.urls ?? [])
+        .filter((item) => item?.source === "editorial-cms" && item.url && item.title)
+        .map((item): ArticleCard => {
+          const href = item.url as string;
+          const slug = href.split("/").filter(Boolean).pop() ?? href;
+          return {
+            id: `cms:${href}`,
+            slug,
+            title: item.title as string,
+            excerpt: item.summary ?? null,
+            category: item.category ?? "baza-wiedzy",
+            reading_minutes: null,
+            published_at: item.published_at ?? item.date_modified ?? null,
+            href,
+            cover_image: item.cover_image ?? null,
+          };
+        });
+    },
+  });
+
+  const allArticles = useMemo(() => {
+    const seen = new Set<string>();
+    return [...(cmsArticles.data ?? []), ...(legacyArticles.data ?? [])]
+      .filter((article) => {
+        const key = `${article.slug}:${article.title}`.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .sort((a, b) => {
+        const aDate = a.published_at ? new Date(a.published_at).getTime() : 0;
+        const bDate = b.published_at ? new Date(b.published_at).getTime() : 0;
+        return bDate - aDate;
+      });
+  }, [cmsArticles.data, legacyArticles.data]);
+
+  const filtered = allArticles.filter((a) => {
+    if (category !== "all" && a.category !== category) return false;
+    if (q.trim() === "") return true;
+    const needle = q.toLowerCase();
+    return a.title.toLowerCase().includes(needle) || a.excerpt?.toLowerCase().includes(needle);
+  });
+
+  const isLoading = legacyArticles.isLoading || cmsArticles.isLoading;
 
   return (
     <div className="mx-auto max-w-7xl px-4 md:px-8 py-16">
@@ -66,8 +145,8 @@ function KnowledgePage() {
           Baza wiedzy o autyzmie i neuroróżnorodności
         </h1>
         <p className="mt-4 text-lg text-muted-foreground">
-          Artykuły oparte na aktualnych standardach (ICD-11, DSM-5), neurobiologii oraz paradygmacie
-          neuroróżnorodności. Bez „naprawiania”, bez inspiration porn.
+          Rzetelna wiedza o spektrum autyzmu, codziennym funkcjonowaniu, relacjach, pracy,
+          diagnozie i wsparciu. Artykuły redakcyjne i materiały eksperckie w jednym miejscu.
         </p>
       </header>
 
@@ -103,7 +182,7 @@ function KnowledgePage() {
         </div>
       </div>
 
-      {articles.isLoading ? (
+      {isLoading ? (
         <div className="mt-12 grid gap-8 md:grid-cols-3">
           {[0, 1, 2].map((i) => (
             <div key={i} className="h-64 rounded-3xl bg-muted animate-pulse" />
@@ -115,31 +194,65 @@ function KnowledgePage() {
         </div>
       ) : (
         <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((a) => (
-            <Link
-              key={a.id}
-              to="/artykul/$slug"
-              params={{ slug: a.slug }}
-              className="group flex flex-col rounded-3xl bg-card p-6 ring-1 ring-border hover:ring-sage transition-all"
-            >
-              <div className="mb-5 aspect-[16/10] rounded-2xl bg-sage-soft" />
-              <div className="flex items-center gap-3 text-xs">
-                <span className="rounded-md bg-sage-soft px-2 py-1 font-semibold uppercase tracking-wider text-sage-deep">
-                  {CATEGORIES.find((c) => c.key === a.category)?.label ?? a.category}
-                </span>
-                <span className="inline-flex items-center gap-1 text-muted-foreground">
-                  <Clock className="size-3.5" aria-hidden />
-                  {a.reading_minutes} min
-                </span>
-              </div>
-              <h2 className="mt-3 font-display text-xl font-semibold leading-snug group-hover:text-sage-deep">
-                {a.title}
-              </h2>
-              <p className="mt-2 text-sm text-muted-foreground line-clamp-3 flex-1">{a.excerpt}</p>
-            </Link>
-          ))}
+          {filtered.map((a) => {
+            const content = <ArticleCardContent article={a} />;
+            return a.href ? (
+              <a
+                key={a.id}
+                href={a.href}
+                className="group flex flex-col rounded-3xl bg-card p-6 ring-1 ring-border hover:ring-sage transition-all"
+              >
+                {content}
+              </a>
+            ) : (
+              <Link
+                key={a.id}
+                to="/artykul/$slug"
+                params={{ slug: a.slug }}
+                className="group flex flex-col rounded-3xl bg-card p-6 ring-1 ring-border hover:ring-sage transition-all"
+              >
+                {content}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
+  );
+}
+
+function ArticleCardContent({ article }: { article: ArticleCard }) {
+  const categoryLabel = CATEGORIES.find((c) => c.key === article.category)?.label ?? article.category;
+
+  return (
+    <>
+      {article.cover_image ? (
+        <div className="mb-5 aspect-[16/10] overflow-hidden rounded-2xl bg-sage-soft">
+          <img
+            src={article.cover_image}
+            alt=""
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        </div>
+      ) : (
+        <div className="mb-5 aspect-[16/10] rounded-2xl bg-sage-soft" />
+      )}
+      <div className="flex items-center gap-3 text-xs">
+        <span className="rounded-md bg-sage-soft px-2 py-1 font-semibold uppercase tracking-wider text-sage-deep">
+          {categoryLabel}
+        </span>
+        {article.reading_minutes ? (
+          <span className="inline-flex items-center gap-1 text-muted-foreground">
+            <Clock className="size-3.5" aria-hidden />
+            {article.reading_minutes} min
+          </span>
+        ) : null}
+      </div>
+      <h2 className="mt-3 font-display text-xl font-semibold leading-snug group-hover:text-sage-deep">
+        {article.title}
+      </h2>
+      <p className="mt-2 text-sm text-muted-foreground line-clamp-3 flex-1">{article.excerpt}</p>
+    </>
   );
 }
