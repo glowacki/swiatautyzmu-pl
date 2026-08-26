@@ -18,6 +18,7 @@ export const Route = createFileRoute("/etapy-zycia")({
       eyebrow="Rozwój"
       title="Etapy życia — od pierwszych oznak po dorosłość"
       lead="Każdy etap ma swoje wyzwania. Zbieramy sprawdzone strategie i prawa, które przysługują na każdym z nich."
+      categoryKey="etapy-zycia"
       topics={[
         {
           icon: Baby,
