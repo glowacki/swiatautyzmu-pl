@@ -112,18 +112,95 @@ const FALLBACK_FACILITIES = [
   },
 ] as const;
 
+type HomeArticle = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  category: string;
+  reading_minutes: number | null;
+  published_at: string | null;
+  href?: string;
+  cover_image?: string | null;
+};
+
+type CmsIndexItem = {
+  url?: string;
+  title?: string;
+  summary?: string;
+  date_modified?: string;
+  published_at?: string;
+  category?: string;
+  cover_image?: string | null;
+  source?: string;
+};
+
 function HomePage() {
   const articles = useQuery({
-    queryKey: ["home", "articles"],
+    queryKey: ["home", "articles", "combined"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("articles")
-        .select("id, slug, title, excerpt, category, reading_minutes, published_at")
-        .eq("status", "published")
-        .order("published_at", { ascending: false })
-        .limit(3);
-      if (error) throw error;
-      return data ?? [];
+      const [legacy, cmsResponse] = await Promise.all([
+        supabase
+          .from("articles")
+          .select("id, slug, title, excerpt, category, reading_minutes, published_at")
+          .eq("status", "published")
+          .order("published_at", { ascending: false })
+          .limit(6),
+        fetch("/content-index.json", {
+          headers: { Accept: "application/json" },
+          cache: "no-store",
+        }).catch(() => null),
+      ]);
+
+      const items: HomeArticle[] = [];
+
+      if (!legacy.error) {
+        for (const article of legacy.data ?? []) {
+          items.push({
+            id: String(article.id),
+            slug: article.slug,
+            title: article.title,
+            excerpt: article.excerpt,
+            category: article.category,
+            reading_minutes: article.reading_minutes,
+            published_at: article.published_at,
+          });
+        }
+      }
+
+      if (cmsResponse?.ok) {
+        const payload = (await cmsResponse.json()) as { urls?: CmsIndexItem[] };
+        for (const item of payload.urls ?? []) {
+          if (item?.source !== "editorial-cms" || !item.url || !item.title) continue;
+          const slug = item.url.split("/").filter(Boolean).pop() ?? item.url;
+          items.push({
+            id: `cms:${item.url}`,
+            slug,
+            title: item.title,
+            excerpt: item.summary ?? null,
+            category: item.category ?? "baza-wiedzy",
+            reading_minutes: null,
+            published_at: item.published_at ?? item.date_modified ?? null,
+            href: item.url,
+            cover_image: item.cover_image ?? null,
+          });
+        }
+      }
+
+      const seen = new Set<string>();
+      return items
+        .filter((article) => {
+          const key = `${article.slug}:${article.title}`.toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .sort((a, b) => {
+          const aDate = a.published_at ? new Date(a.published_at).getTime() : 0;
+          const bDate = b.published_at ? new Date(b.published_at).getTime() : 0;
+          return bDate - aDate;
+        })
+        .slice(0, 3);
     },
   });
 
@@ -251,29 +328,53 @@ function HomePage() {
           </div>
         ) : hasArticles ? (
           <div className="grid gap-8 md:grid-cols-3">
-            {articles.data?.map((a) => (
-              <Link
-                key={a.id}
-                to="/artykul/$slug"
-                params={{ slug: a.slug }}
-                className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-deep rounded-2xl"
-              >
-                <div className="mb-5 aspect-[16/10] rounded-2xl bg-sage-soft ring-1 ring-border" />
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="rounded-md bg-sage-soft px-2 py-1 font-semibold uppercase tracking-wider text-sage-deep">
-                    {categoryLabel(a.category)}
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-muted-foreground">
-                    <Clock className="size-3.5" aria-hidden />
-                    {a.reading_minutes} min
-                  </span>
-                </div>
-                <h3 className="mt-3 font-display text-xl font-semibold leading-snug group-hover:text-sage-deep transition-colors">
-                  {a.title}
-                </h3>
-                <p className="mt-2 text-sm text-muted-foreground line-clamp-3">{a.excerpt}</p>
-              </Link>
-            ))}
+            {articles.data?.map((a) => {
+              const card = (
+                <>
+                  {a.cover_image ? (
+                    <div className="mb-5 aspect-[16/10] overflow-hidden rounded-2xl bg-sage-soft ring-1 ring-border">
+                      <img src={a.cover_image} alt="" className="h-full w-full object-cover" loading="lazy" />
+                    </div>
+                  ) : (
+                    <div className="mb-5 aspect-[16/10] rounded-2xl bg-sage-soft ring-1 ring-border" />
+                  )}
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="rounded-md bg-sage-soft px-2 py-1 font-semibold uppercase tracking-wider text-sage-deep">
+                      {categoryLabel(a.category)}
+                    </span>
+                    {a.reading_minutes ? (
+                      <span className="inline-flex items-center gap-1 text-muted-foreground">
+                        <Clock className="size-3.5" aria-hidden />
+                        {a.reading_minutes} min
+                      </span>
+                    ) : null}
+                  </div>
+                  <h3 className="mt-3 font-display text-xl font-semibold leading-snug group-hover:text-sage-deep transition-colors">
+                    {a.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-muted-foreground line-clamp-3">{a.excerpt}</p>
+                </>
+              );
+
+              return a.href ? (
+                <a
+                  key={a.id}
+                  href={a.href}
+                  className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-deep rounded-2xl"
+                >
+                  {card}
+                </a>
+              ) : (
+                <Link
+                  key={a.id}
+                  to="/artykul/$slug"
+                  params={{ slug: a.slug }}
+                  className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-deep rounded-2xl"
+                >
+                  {card}
+                </Link>
+              );
+            })}
           </div>
         ) : (
           <div className="grid gap-8 md:grid-cols-3">
